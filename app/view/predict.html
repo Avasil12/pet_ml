@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Form</title>
+</head>
+<body>
+    <h1>Enter project details for prediction</h1>
+    <form method="POST" action="/task/predict">
+        <label>Country:</label><br>
+        <input type="text" name="country" required><br><br>
+        
+        <label>Currency:</label><br>
+        <input type="text" name="currency" required><br><br>
+        
+        <label>Prelaunch Activated:</label><br>
+        <input type="checkbox" name="prelaunch_activated"><br><br>
+
+        <label>Staff Pick:</label><br>
+        <input type="checkbox" name="staff_pick"><br><br>
+
+        <label>Static USD Rate:</label><br>
+        <input type="number" name="static_usd_rate" step="0.01" required><br><br>
+
+        <label>FX Rate:</label><br>
+        <input type="number" name="fx_rate" step="0.01" required><br><br>
+
+        <label>Created At:</label><br>
+        <input type="date" name="created_at" required><br><br>
+
+        <label>Launched At:</label><br>
+        <input type="date" name="launched_at" required><br><br>
+
+        <label>Deadline:</label><br>
+        <input type="date" name="deadline" required><br><br>
+
+        <label>Name:</label><br>
+        <input type="text" name="name" required><br><br>
+
+        <label>Blurb:</label><br>
+        <textarea name="blurb" required></textarea><br><br>
+
+        <label>USD Goal:</label><br>
+        <input type="number" name="usd_goal" required><br><br>
+
+        <label>Name City:</label><br>
+        <input type="text" name="name_city" required><br><br>
+
+        <label>Region:</label><br>
+        <input type="text" name="region" required><br><br>
+
+        <label>Type:</label><br>
+        <input type="text" name="type" required><br><br>
+
+        <label>PPO Has Action:</label><br>
+        <input type="text" name="ppohasaction" required><br><br>
+
+        <label>Analytics Name:</label><br>
+        <input type="text" name="analytics_name" required><br><br>
+
+        <label>Position:</label><br>
+        <input type="number" name="position" required><br><br>
+
+        <label>Parent Name:</label><br>
+        <input type="text" name="parent_name" required><br><br>
+
+        <label>Is Not First Project:</label><br>
+        <input type="checkbox" name="is_not_first_project"><br><br>
+
+        <label>Has Video:</label><br>
+        <input type="checkbox" name="has_video"><br><br>
+
+        <input type="submit" value="Predict">
+    </form>
+
+    {% if prediction %}
+    <h2>Prediction: {{ prediction }}</h2>
+    {% endif %}
+</body>
+</html>

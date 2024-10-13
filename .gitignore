@@ -1,0 +1,9 @@
+database/
+rabbitmq
+.env
+*.pyc
+__pycache__/
+.vscode
+.venv
+trash/
+
