@@ -20,7 +20,7 @@ services:
       - rabbitmq  
 
   database:
-    image: postgres:alpine
+    image: postgres:16-alpine
     volumes:
       - ./database:/var/lib/postgresql/data 
     expose:
@@ -44,11 +44,13 @@ services:
   worker:
     build:
       context: ./app/  
-      dockerfile: Dockerfile_worker  
+      dockerfile: dockerfile_worker  
     env_file:
       - ./app/.env
     volumes:
       - ./app:/app
+    deploy:
+      replicas: 5
     depends_on:
       - rabbitmq
       - database  

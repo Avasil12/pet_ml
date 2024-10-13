@@ -1,4 +1,3 @@
-# просмотр всех транзакций, просмотр транзакции поlocal_model_id
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from fastapi.security import OAuth2PasswordBearer

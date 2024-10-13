@@ -6,7 +6,7 @@ class BalanceUpdate(BaseModel):
     amount: int = 50
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class BalanceRead(BaseModel):
