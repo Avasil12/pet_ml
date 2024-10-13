@@ -1,15 +1,16 @@
 import logging
 import pickle
-from fastapi import APIRouter, Depends, Form, HTTPException
+from fastapi import APIRouter, Cookie, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordBearer
 from typing import List
 from sqlalchemy.orm import Session
+from services.crud.user import get_user_id_by_email
+from routes.balance import spend_balance
 from database.database import get_session
-from models.MLTask import MLtaskORM
-from schemas.MLTask import MLResultCreate, MLResultRead, MLTaskCreate, MLTaskRead, PredictionInput
+from models.MLTask import MLResult, MLtaskORM
+from schemas.MLTask import MLResultCreate
 from services.crud import MLTask as MLTaskServices
-from services.crud import user as UserServices
 from typing import Dict
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
@@ -119,7 +120,6 @@ def preprocess_input(data: Dict):
 
 
 def predict(df:  pd.DataFrame):
-
     with open("best_model.pkl", "rb") as f:
         model = pickle.load(f)
     prediction = model.predict(df)
@@ -128,18 +128,15 @@ def predict(df:  pd.DataFrame):
 
 @task_router.get("/predict", response_class=HTMLResponse)
 async def get_predict(request: Request, user: str = Depends(authenticate_cookie)):
-    context = {
-        "user": user,
-        "request": request
-    }
-    return templates.TemplateResponse("predict.html", context)
+    response = templates.TemplateResponse("predict.html", {"user": user, "request": request})
+    return response
 
 
-
-# Маршрут для POST-запроса с использованием response_model
-@task_router.post("/predict", response_model=MLResultCreate, response_class=HTMLResponse)
+@task_router.post("/predict",  response_model=MLResultCreate, response_class=HTMLResponse)
 async def post_predict(
     request: Request,
+    user: str = Depends(authenticate_cookie),
+    db: Session = Depends(get_session),
     country: str = Form(...),
     currency: str = Form(...),
     prelaunch_activated: bool = Form(...),
@@ -162,7 +159,10 @@ async def post_predict(
     is_not_first_project: bool = Form(...),
     has_video: bool = Form(...)
 ):
-    # Собираем данные в словарь
+    user_id = get_user_id_by_email(user, db)
+    if user_id is None:
+        raise HTTPException(status_code=403, detail="User not authenticated")
+    user_id = int(user_id)
     input_data = {
         'country': country,
         'currency': currency,
@@ -186,13 +186,33 @@ async def post_predict(
         'is_not_first_project': is_not_first_project,
         'has_video': has_video
     }
+    ml_task = MLtaskORM(
+        user_id=user_id,
+        model_id=1,
+        input_data=input_data
+    )
+    MLTaskServices.create_ml_task(ml_task, db)
+    prediction_cost = 10
+    # так как модель пока одна а model как сущность создана только для будущего масштабирования
+    # пока cost будет указан явно в MLTask
     preprocess_data = preprocess_input(input_data)
     logging.info(f"Preprocessed data: {preprocess_data}")
+    balance_update = spend_balance(user_id=user_id, amount=prediction_cost, db=db)
+    if balance_update is None:
+        raise HTTPException(status_code=400, detail="Insufficient funds")
 
     if not isinstance(preprocess_data, pd.DataFrame):
         raise HTTPException(status_code=400, detail="Preprocessed data is not a DataFrame")
 
     prediction = predict(preprocess_data)
+
+    ml_result = MLResult(
+        ml_task_id=ml_task.ml_task_id,  
+        predict=int(prediction)
+  
+    )
+
+    MLTaskServices.create_result(ml_result, db) 
     logging.info(f"Prediction: {prediction}")
 
     return templates.TemplateResponse("predict.html", {"request": request, "prediction": prediction})

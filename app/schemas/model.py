@@ -4,9 +4,9 @@ from typing import Optional
 
 class ModelCreate(BaseModel):
     name: str
-    de: str
+    desc: str
     cost: int
-    path_to_model: str
+    path: str
 
 
 class ModelRead(BaseModel):
@@ -14,7 +14,7 @@ class ModelRead(BaseModel):
     name: str
     desc: str
     cost: int
-    path_to_model: str
+    path: str
 
     class Config:
         protected_namespaces = ()

@@ -18,3 +18,4 @@ def create_model(new_model: ModelORM, session) -> None:
         session.add(db_model)
         session.commit()
         session.refresh(db_model)
+        return db_model

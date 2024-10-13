@@ -1,7 +1,6 @@
 from typing import List
 
 from fastapi.security import OAuth2PasswordBearer
-from auth.jwt_handler import verify_access_token
 from database.database import get_session
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -16,7 +15,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @balance_route.get("/check")
 async def check_balance(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)) -> dict:
-
     current_user = UserServices.get_current_user(token, db)
     balance = BalanceServices.get_balance_by_id(current_user.user_id, db)
     if not balance:
@@ -33,7 +31,7 @@ def get_all_balances(db: Session = Depends(get_session)) -> List[BalanceRead]:
 
 
 @balance_route.post("/top_up", response_model=BalanceUpdate)
-def top_up_balance(balance_update: BalanceUpdate, token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)) -> BalanceUpdate:
+def top_up_balance(balance_update: BalanceUpdate, token: str = Depends(get_session), db: Session = Depends(get_session)) -> BalanceUpdate:
     current_user = UserServices.get_current_user(token, db)
 
     balance = BalanceServices.top_up_balance(current_user.user_id, balance_update.amount, db)

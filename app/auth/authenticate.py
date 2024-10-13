@@ -14,7 +14,7 @@ async def authenticate(token: str=Depends(oauth2_scheme)) -> str:
     decoded_token = verify_access_token(token) 
     return decoded_token["user"]
 
-oauth2_scheme_cookie = OAuth2PasswordBearerWithCookie(tokenUrl="/home/token")
+oauth2_scheme_cookie = OAuth2PasswordBearerWithCookie(tokenUrl="/user/token")
 
 async def authenticate_cookie(token: str=Depends(oauth2_scheme_cookie)) -> str:
     if not token:

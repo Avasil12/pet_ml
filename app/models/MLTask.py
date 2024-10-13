@@ -8,7 +8,7 @@ class MLtaskORM(SQLModel, table=True):
     __tablename__ = "task"
     ml_task_id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(default=None, foreign_key="users.user_id")
-    model_id: int = Field(default=None, foreign_key="model.local_model_id")
+    model_id: int = Field(default=None, foreign_key="model.model_id")
     input_data: Dict[str, Any] = Field(sa_column=Column(JSON, nullable=False))
 
     class Config:

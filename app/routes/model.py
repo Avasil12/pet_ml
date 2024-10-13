@@ -25,6 +25,18 @@ def get_all_models(db: Session = Depends(get_session)) -> List[ModelRead]:
     return models
 
 
+@model_route.post("/create-model", response_model=ModelORM)
+def create_model_route(db: Session = Depends(get_session)) -> ModelORM:
+    # Создание модели с использованием значений по умолчанию
+    default_model = ModelORM(
+            name="clf",
+            desc="best_catboost_model_ever_84score",
+            cost=10,
+            path="best_model.pkl")  # Использует значения по умолчанию из класса ModelORM
+    created_model = ModelServices.create_model(default_model, db)
+    return created_model
+
+
 @model_route.get("/{id}", response_model=ModelRead)
 def get_model_by_id(id: int, db: Session = Depends(get_session)) -> ModelRead:
     model = ModelServices.get_model_by_id(id, db)

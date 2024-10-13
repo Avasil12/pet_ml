@@ -8,7 +8,6 @@ class TransactionORM(SQLModel, table=True):
     transaction_id: Optional[int] = Field(default=None, primary_key=True)
     cost: int
     user_id: int = Field(default=None, foreign_key="users.user_id")
-    ml_task_id: int = Field(default=None, foreign_key="task.ml_task_id")
 
     balance_old: int = Field(default=0)
     balance_now: int = Field(default=0)
