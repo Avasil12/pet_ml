@@ -1,8 +1,9 @@
 import json
 import os
+import time
 import pika
 from fastapi import APIRouter, Depends, Form, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from services.crud.user import get_user_id_by_email
@@ -123,5 +124,14 @@ async def post_predict(
     )
 
     connection.close()
+    time.sleep(3)
+    return RedirectResponse(url=f"/task/predict_task/{ml_task.ml_task_id}", status_code=303)
 
-    return templates.TemplateResponse("predict.html", {"request": request, "message": "Prediction task submitted."})
+
+@task_router.get("/predict_task/{ml_task_id}", response_model=MLResultCreate, response_class=HTMLResponse)
+async def get_prediction_result(ml_task_id: int,  request: Request, db: Session = Depends(get_session)):
+    result = MLTaskServices.get_result_by_task_id(ml_task_id, db)
+    if not result:
+        raise HTTPException(status_code=404, detail="Prediction result not found")
+    
+    return templates.TemplateResponse("result.html", {"request": request, "result": result})

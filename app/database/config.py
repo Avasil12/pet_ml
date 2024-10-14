@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     DB_NAME: Optional[str] = None
     COOKIE_NAME: Optional[str] = None
     SECRET_KEY: Optional[str] = None
+    RABBITMQ_USER: Optional[str] = None
+    RABBITMQ_PASS: Optional[str] = None
     
     @property
     def DATABASE_URL_asyncpg(self):

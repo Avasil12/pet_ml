@@ -7,7 +7,9 @@
     <title>Prediction Form</title>
 </head>
 <body>
-    <h1>Enter project details for prediction</h1>
+    {% include '_user_map.html' %}
+
+    <h1>Enter Введите данные для предсказания </h1>
     <form method="POST" action="/task/predict">
         <label>Country:</label><br>
         <input type="text" name="country" required><br><br>

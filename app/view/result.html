@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Result</title>
+</head>
+<body>
+    {% include '_user_map.html' %}
+
+    <h1>Prediction Result</h1>
+    <p>Task ID: {{ result.ml_task_id }}</p>
+    <p>Prediction: {{ result.predict }}</p>
+</body>
+</html>

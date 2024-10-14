@@ -27,7 +27,12 @@ def load_model(path_to_model) -> None:
 def get_ml_task_by_id(ml_task_id: int, session) -> MLtaskORM:
     with session:
         return session.query(MLtaskORM).filter(MLtaskORM.ml_task_id == ml_task_id).first()
-
+    
+    
+def get_result_by_task_id(ml_task_id: int, session):
+    with session:
+        return session.query(MLResult).filter(MLResult.ml_task_id == ml_task_id).first()
+    
 
 def get_all_results(session):
     with session:
