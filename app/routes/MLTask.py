@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import os
 import time
@@ -33,13 +34,12 @@ async def get_predict(request: Request, user: str = Depends(authenticate_cookie)
 
 @task_router.post("/predict",  response_model=MLResultCreate, response_class=HTMLResponse)
 async def post_predict(
-    request: Request,
     user: str = Depends(authenticate_cookie),
     db: Session = Depends(get_session),
     country: str = Form(...),
     currency: str = Form(...),
-    prelaunch_activated: bool = Form(...),
-    staff_pick: bool = Form(...),
+    prelaunch_activated: bool = Form(default=False),
+    staff_pick: bool = Form(default=False),
     static_usd_rate: float = Form(...),
     fx_rate: float = Form(...),
     created_at: str = Form(...),
@@ -51,13 +51,31 @@ async def post_predict(
     name_city: str = Form(...),
     region: str = Form(...),
     type: str = Form(...),
-    ppohasaction: str = Form(...),
+    ppohasaction: bool = Form(default=False),
     analytics_name: str = Form(...),
     position: int = Form(...),
     parent_name: str = Form(...),
-    is_not_first_project: bool = Form(...),
-    has_video: bool = Form(...)
-):
+    is_not_first_project: bool = Form(default=False),
+    has_video: bool = Form(default=False)
+):  
+    created_at_date = datetime.strptime(created_at, "%Y-%m-%d")
+    launched_at_date = datetime.strptime(launched_at, "%Y-%m-%d")
+    deadline_date = datetime.strptime(deadline, "%Y-%m-%d")
+    if created_at_date <= datetime(2011, 1, 1):
+        raise HTTPException(status_code=400, detail="created_at must be greater than January 1, 2011.")
+    
+    if launched_at_date <= created_at_date:
+        raise HTTPException(status_code=400, detail="launched_at must be greater than created_at.")
+    
+    if deadline_date <= launched_at_date:
+        raise HTTPException(status_code=400, detail="deadline must be greater than launched_at.")
+    
+    if not (0 < fx_rate < 10):
+        raise HTTPException(status_code=400, detail="fx_rate must be between 0 and 10.")
+    
+    if not (0 < static_usd_rate < 10):
+        raise HTTPException(status_code=400, detail="static_usd_rate must be between 0 and 10.")
+
     user_id = get_user_id_by_email(user, db)
     if user_id is None:
         raise HTTPException(status_code=403, detail="User not authenticated")
@@ -87,7 +105,7 @@ async def post_predict(
     }
     prediction_cost = 10
 
-    balance_update = spend_balance(user_id=user_id, amount=prediction_cost, db=db)    
+    balance_update = spend_balance(user_id=user_id, amount=prediction_cost, db=db)
     if balance_update is None:
         raise HTTPException(status_code=400, detail="Insufficient funds")
     ml_task = MLtaskORM(
@@ -99,7 +117,7 @@ async def post_predict(
     message = {
         "user_id": user_id,
         "input_data": input_data,
-        "ml_task_id" : ml_task.ml_task_id
+        "ml_task_id": ml_task.ml_task_id
     }
     connection_params = pika.ConnectionParameters(
         host='rabbitmq',
@@ -107,7 +125,7 @@ async def post_predict(
         virtual_host='/',
         credentials=pika.PlainCredentials(
             username=os.getenv('RABBITMQ_USER'),
-            password=os.getenv('RABBITMQ_PASS') 
+            password=os.getenv('RABBITMQ_PASS')
         )
     )
     connection = pika.BlockingConnection(connection_params)
@@ -119,7 +137,7 @@ async def post_predict(
         routing_key='prediction_queue',
         body=json.dumps(message),
         properties=pika.BasicProperties(
-            delivery_mode=2,  
+            delivery_mode=2,
         )
     )
 
@@ -133,5 +151,5 @@ async def get_prediction_result(ml_task_id: int,  request: Request, db: Session 
     result = MLTaskServices.get_result_by_task_id(ml_task_id, db)
     if not result:
         raise HTTPException(status_code=404, detail="Prediction result not found")
-    
+
     return templates.TemplateResponse("result.html", {"request": request, "result": result})

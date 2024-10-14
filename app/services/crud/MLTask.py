@@ -1,6 +1,7 @@
 from typing import List
 
 import joblib
+from sqlalchemy import desc
 from models.MLTask import MLResult, MLtaskORM
 
 
@@ -27,12 +28,12 @@ def load_model(path_to_model) -> None:
 def get_ml_task_by_id(ml_task_id: int, session) -> MLtaskORM:
     with session:
         return session.query(MLtaskORM).filter(MLtaskORM.ml_task_id == ml_task_id).first()
-    
-    
+  
+
 def get_result_by_task_id(ml_task_id: int, session):
     with session:
         return session.query(MLResult).filter(MLResult.ml_task_id == ml_task_id).first()
-    
+
 
 def get_all_results(session):
     with session:
@@ -47,3 +48,15 @@ def get_all_tasks(session):
 def get_ml_tasks_by_user_id(user_id: int, session) -> List[MLtaskORM]:
     with session:
         return session.query(MLtaskORM).filter(MLtaskORM.user_id == user_id).all()
+
+
+def get_ml_tasks_with_results(user_id: int, limit: int, session):
+    with session:
+        return (
+            session.query(MLtaskORM.ml_task_id, MLtaskORM.model_id, MLtaskORM.input_data, MLResult.predict)
+            .join(MLResult, MLtaskORM.ml_task_id == MLResult.ml_task_id) 
+            .filter(MLtaskORM.user_id == user_id)
+            .order_by(desc(MLtaskORM.ml_task_id))
+            .limit(limit)
+            .all()
+        )

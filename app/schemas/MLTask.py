@@ -17,7 +17,7 @@ class MLTaskRead(BaseModel):
 class MLResultCreate(BaseModel):
     ml_task_id: int
     predict: int
-   
+
     model_config = ConfigDict(protected_namespaces=())
 
 

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Overview</title>
+</head>
+<body>
+    <h1>User Overview</h1>
+
+    <h2>Your Balance</h2>
+    <div id="balance-info">
+    </div>
+
+    <h2>Top Up Balance</h2>
+    <form id="top-up-form" method="post" action="/balance/top_up">
+        <label for="amount">Amount:</label>
+        <input type="number" id="amount" name="amount" required>
+        <button type="submit">Top Up</button>
+    </form>
+    <h2>Вывод Transactions</h2>
+    <form method="get" action="/overview/user_overview">
+        <label for="transaction_limit">Введите limit транзакции </label>
+        <input type="number" id="transaction_limit" name="transaction_limit" min="1" value="5" required>
+        <button type="submit">Update</button>
+    </form>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>Cost</th>
+                <th>Old Balance</th>
+                <th>New Balance</th>
+                <th>Description</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction.transaction_id }}</td>
+                <td>{{ transaction.cost }}</td>
+                <td>{{ transaction.balance_old }}</td>
+                <td>{{ transaction.balance_now }}</td>
+                <td>{{ transaction.desc }}</td>
+                <td>{{ transaction.date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h2>ML Task Results</h2>
+    <form method="get" action="/overview/user_overview">
+        <label for="task_limit">Введите число строк которые вы хотите увидеть ваших таско</label>
+        <input type="number" id="task_limit" name="task_limit" min="1" value="5">
+        <button type="submit">Update</button>
+    </form>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ML Task ID</th>
+                <th>Model ID</th>
+                <th>Input Data</th>
+                <th>Prediction</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in ml_tasks_results %}
+            <tr>
+                <td>{{ task.ml_task_id }}</td>
+                <td>{{ task.model_id }}</td>
+                <td>{{ task.input_data }}</td>
+                <td>{{ task.predict }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function updateBalance() {
+            fetch("/balance/check")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("balance-info").innerText = "Your balance: " + data.balance;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        updateBalance();
+
+        document.getElementById("top-up-form").addEventListener("submit", function(event) {
+            event.preventDefault(); 
+
+            const amount = document.getElementById("amount").value;
+
+            fetch("/balance/top_up", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `amount=${amount}`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to top up balance");
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update the balance on the page
+                updateBalance();
+                alert("Balance successfully topped up!");
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

@@ -1,8 +1,9 @@
 from typing import List
 
 from fastapi.security import OAuth2PasswordBearer
+from auth.authenticate import authenticate_cookie
 from database.database import get_session
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, status
 from sqlalchemy.orm import Session
 from schemas.balance import BalanceRead, BalanceUpdate
 from services.crud import balance as BalanceServices
@@ -14,13 +15,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @balance_route.get("/check")
-async def check_balance(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)) -> dict:
-    current_user = UserServices.get_current_user(token, db)
-    balance = BalanceServices.get_balance_by_id(current_user.user_id, db)
+async def check_balance(user: str = Depends(authenticate_cookie), db: Session = Depends(get_session)) -> dict:
+    user_id = UserServices.get_user_id_by_email(user, db)
+    balance = BalanceServices.get_balance_by_id(user_id, db)
     if not balance:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="balance not found")
-    if not token:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not verified")
 
     return {"balance": balance.amount}
 
@@ -31,10 +30,12 @@ def get_all_balances(db: Session = Depends(get_session)) -> List[BalanceRead]:
 
 
 @balance_route.post("/top_up", response_model=BalanceUpdate)
-def top_up_balance(balance_update: BalanceUpdate, token: str = Depends(get_session), db: Session = Depends(get_session)) -> BalanceUpdate:
-    current_user = UserServices.get_current_user(token, db)
+def top_up_balance(amount: int = Form(...), user: str = Depends(authenticate_cookie),  db: Session = Depends(get_session)) -> BalanceUpdate:
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be greater than 0")
 
-    balance = BalanceServices.top_up_balance(current_user.user_id, balance_update.amount, db)
+    user_id = UserServices.get_user_id_by_email(user, db)
+    balance = BalanceServices.top_up_balance(user_id, amount, db)
     if balance is None:
         raise HTTPException(status_code=404, detail="User not found")
     return BalanceUpdate(amount=balance.amount)
